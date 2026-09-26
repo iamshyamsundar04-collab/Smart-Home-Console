@@ -208,7 +208,7 @@ function PaneTitle({ icon, title, right }: { icon: React.ReactNode; title: strin
 function JsonBlock({ label, data, extra }: { label: string; data: unknown; extra?: string | undefined }) {
   return (
     <div className="flex min-h-0 flex-col border-b last:border-b-0">
-      <div className="flex items-center justify-between px-4 py-2 font-mono text-[11px] text-muted-foreground"><span className="text-foreground">{label}</span><span className="truncate pl-3">{extra}</span></div>
+      <div className="flex items-center justify-between px-4 py-2 font-mono text-[11px] text-muted-foreground"><span className="whitespace-nowrap text-foreground">{label}</span><span className="truncate pl-3">{extra}</span></div>
       <pre className="scrollbar-thin flex-1 overflow-auto px-4 pb-3 font-mono text-[11.5px] leading-relaxed text-primary/90">{data ? JSON.stringify(data, null, 2) : "—"}</pre>
     </div>
   );
