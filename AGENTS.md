@@ -8,3 +8,4 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+- MCP client + mock tools + intent planner live in src/lib/mcp.ts; browser calls real MCP servers directly (server must allow CORS and expose mcp-session-id).
