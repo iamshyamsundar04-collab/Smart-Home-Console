@@ -14,13 +14,13 @@ export type TraceEntry = {
   id: string;
   ts: number;
   method: string;
-  tool?: string;
+  tool?: string | undefined;
   params: unknown;
   response: unknown;
   latency: number;
   status: "ok" | "error";
   mode: "mock" | "live";
-  sessionId?: string;
+  sessionId?: string | undefined;
 };
 
 export const initialDevices: Devices = {
