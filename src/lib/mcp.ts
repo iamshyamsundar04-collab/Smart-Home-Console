@@ -115,7 +115,7 @@ export class McpClient {
     }
 
     try {
-      const headers: Record<string, string> = { "Content-Type": "application/json", Accept: "application/json, text/event-stream", "MCP-Protocol-Version": "2025-11-25" };
+      const headers: Record<string, string> = { "Content-Type": "application/json", Accept: "application/json, text/event-stream" };
       if (this.sessionId) headers["mcp-session-id"] = this.sessionId;
       const res = await fetch(this.url, { method: "POST", headers, body: JSON.stringify(body) });
       const sid = res.headers.get("mcp-session-id");

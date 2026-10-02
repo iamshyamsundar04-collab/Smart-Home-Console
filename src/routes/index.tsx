@@ -16,6 +16,12 @@ export const Route = createFileRoute("/")({
 });
 
 type Msg = { role: "user" | "assistant"; text: string; tools?: string[] };
+
+export function normalizeMcpUrl(raw: string): string {
+  let u = raw.trim().replace(/\/+$/, "");
+  if (u && !/\/mcp$/i.test(u)) u += "/mcp";
+  return u;
+}
 const SUGGESTIONS = ["What's going on around the house?", "Did anyone come to the door while I was out?", "Lock the front door and dim the living room lights", "Remind me to take out the trash at 7pm"];
 
 function App() {
@@ -27,6 +33,7 @@ function App() {
   const [busy, setBusy] = useState(false);
   const [url, setUrl] = useState("");
   const [showSettings, setShowSettings] = useState(false);
+  const [connStatus, setConnStatus] = useState<{ state: "idle" | "connecting" | "ok" | "error"; text: string }>({ state: "idle", text: "" });
   const [flash, setFlash] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const client = useRef<McpClient | null>(null);
@@ -36,9 +43,28 @@ function App() {
   const addTrace = (t: TraceEntry) => { setTraces((p) => [t, ...p]); setSelected(t.id); };
 
   const reset = (u: string) => {
-    client.current = new McpClient(u.trim() || null, { devices, reminders }, addTrace);
+    client.current = new McpClient(u || null, { devices, reminders }, addTrace);
     initialized.current = false;
   };
+
+    async function connect() {
+    const u = normalizeMcpUrl(url);
+    setUrl(u);
+    setTraces([]);
+    reset(u);
+    if (!u) { setConnStatus({ state: "idle", text: "Using built-in mock server." }); return; }
+    setConnStatus({ state: "connecting", text: "Connecting…" });
+    try {
+      const c = client.current!;
+      await c.request("initialize", { protocolVersion: "2025-11-25", capabilities: {}, clientInfo: { name: "alexa-plus-testbed", version: "1.0.0" } });
+      await c.notify("notifications/initialized");
+      await c.request("tools/list");
+      initialized.current = true;
+      setConnStatus({ state: "ok", text: `Connected to live server · ${u}` });
+    } catch (e: any) {
+      setConnStatus({ state: "error", text: `Connection failed: ${e.message}` });
+    }
+  }
   useEffect(() => { reset(""); }, []);
   useEffect(() => chatEnd.current?.scrollIntoView({ behavior: "smooth" }), [msgs, busy]);
 
@@ -122,7 +148,13 @@ function App() {
             <span className="text-xs text-muted-foreground">MCP server URL (leave empty for built-in mock)</span>
             <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="http://localhost:3000/mcp" className="mt-1 w-full rounded-lg border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-primary" />
           </label>
-          <button onClick={() => { reset(url); setShowSettings(false); setTraces([]); }} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">Connect</button>
+          <button onClick={connect} disabled={connStatus.state === "connecting"} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50">Connect</button>
+          {connStatus.text && (
+            <p className={`basis-full font-mono text-xs ${connStatus.state === "ok" ? "text-success" : connStatus.state === "error" ? "text-destructive" : "text-muted-foreground"}`}>
+              {connStatus.state === "connecting" && <span className="mr-2 inline-block size-2 animate-ping rounded-full bg-primary align-middle" />}
+              {connStatus.text}
+            </p>
+          )}
         </div>
       )}
 
